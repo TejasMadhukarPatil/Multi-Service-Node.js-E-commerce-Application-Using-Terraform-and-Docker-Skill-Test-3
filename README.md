@@ -1,0 +1,2 @@
+# Multi-Service-Node.js-E-commerce-Application-Using-Terraform-and-Docker-Skill-Test-3
+E-Commerce Microservices Application                                                                                                                                                                      A full-stack MERN e-commerce application built with microservices architecture, featuring 4 separate Node.js backend services and a React frontend.
