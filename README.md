@@ -126,18 +126,26 @@ cd ../../frontend && npm install
 4] Cart Service: http://localhost:3003
 5] Order Service: http://localhost:3004
 
+
 **Docker Deployment**
 
 Each service can be containerized with Docker:
 
-# Example Dockerfile for a service
+ **Dockerfile for a service**
+ 
 FROM node:16-alpine
+
 WORKDIR /app
+
 COPY package*.json ./
+
 RUN npm install --production
+
 COPY . .
+
 EXPOSE 3001
-CMD ["npm", "start"]
+
+CMD  ["npm", "start"]
             
 
 
