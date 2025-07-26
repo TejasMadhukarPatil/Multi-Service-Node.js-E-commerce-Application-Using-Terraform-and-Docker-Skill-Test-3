@@ -329,6 +329,11 @@ Use this IP to access the frontend.
 
 <img width="308" height="37" alt="image" src="https://github.com/user-attachments/assets/52374cd7-b302-480a-b092-e85ae88f7aef" />
 <img width="220" height="113" alt="image" src="https://github.com/user-attachments/assets/eb304399-adc8-4091-8edf-73fcf7563276" />
+<img width="1173" height="228" alt="image" src="https://github.com/user-attachments/assets/e116d103-3b7d-402f-822b-ea592443ae28" />
+<img width="1516" height="807" alt="image" src="https://github.com/user-attachments/assets/62301025-a673-4dfd-9545-c67ba18afb5c" />
+<img width="1446" height="673" alt="image" src="https://github.com/user-attachments/assets/53e43edc-9b67-4adf-a5d0-13f303654249" />
+
+
 
 
 
