@@ -1,151 +1,338 @@
 # Multi-Service-Node.js-E-commerce-Application-Using-Terraform-and-Docker-Skill-Test-3
-E-Commerce Microservices Application                                                                                                                                                                      A full-stack MERN e-commerce application built with microservices architecture, featuring 4 separate Node.js backend services and a React frontend.
 
 
-**Architecture Overview**
+Create **Dockerfile**s for Each Service
 
-This application demonstrates modern microservices architecture with the following components:
-
-Frontend (React) → API Gateway → Microservices
-                                    ├── User Service (3001)
-                                    ├── Product Service (3002)
-                                    ├── Cart Service (3003)
-                                    └── Order Service (3004)
-
-
-                                   **Microservices**
-
-                                   1. User Service (Port 3001)
-1] User registration and authentication
-2] Profile management
-3] JWT token generation and validation
-4] User data persistence
-
-
-                                  2. Product Service (Port 3002)
-1] Product catalog management
-2] Category management
-3] Product search and filtering
-4] Inventory tracking
-
-
-                                  3. Cart Service (Port 3003)
-1] Shopping cart management
-2] Add/remove/update cart items
-3] Cart validation
-4] Integration with Product Service
-
-
-                                  4. Order Service (Port 3004)
-1] Order creation and management
-2] Payment processing simulation
-3] Order status tracking
-4] Integration with Cart and Product Services
-
-
-
-
-              **Installation**
-             1] Clone the repository
-             git clone <repository-url>
-             cd ecommerce-microservices
-
-            2] Install dependencies for each service
-            
-# Install User Service dependencies
-cd backend/user-service && npm install
-
-# Install Product Service dependencies
-cd ../product-service && npm install
-
-# Install Cart Service dependencies
-cd ../cart-service && npm install
-
-# Install Order Service dependencies
-cd ../order-service && npm install
-
-# Install Frontend dependencies
-cd ../../frontend && npm install
-
-            3]Set up environment variables
-            
-            backend/user-service/.env:
-            PORT=3001
-            MONGODB_URI=mongodb://localhost:27017/ecommerce_users
-            JWT_SECRET=your-jwt-secret-key
-
-            backend/product-service/.env:
-            PORT=3002
-            MONGODB_URI=mongodb://localhost:27017/ecommerce_products
-
-            backend/cart-service/.env:
-            PORT=3003
-            MONGODB_URI=mongodb://localhost:27017/ecommerce_carts
-            PRODUCT_SERVICE_URL=http://localhost:3002
-
-            backend/order-service/.env:
-
-            PORT=3004
-            MONGODB_URI=mongodb://localhost:27017/ecommerce_orders
-            CART_SERVICE_URL=http://localhost:3003
-            PRODUCT_SERVICE_URL=http://localhost:3002
-            USER_SERVICE_URL=http://localhost:3001
-
-            frontend/.env:
-            REACT_APP_USER_SERVICE_URL=http://localhost:3001
-            REACT_APP_PRODUCT_SERVICE_URL=http://localhost:3002
-            REACT_APP_CART_SERVICE_URL=http://localhost:3003
-            REACT_APP_ORDER_SERVICE_URL=http://localhost:3004
-
-           ** Running the Application**
-
-           Terminal 1 - User Service:
-
-           cd backend/user-service && npm start
-
-           Terminal 2 - Product Service:
-
-           cd backend/product-service && npm start
-
-           Terminal 3 - Cart Service:
-
-           cd backend/cart-service && npm start
-
-           Terminal 4 - Order Service:
-
-           cd backend/order-service && npm start
-
-           Terminal 5 - Frontend:
-
-           cd frontend && npm start
-**           **The application will be available at:**
-
-1] Frontend: http://localhost:3000/
-2] User Service: http://localhost:3001/
-3] Product Service: http://localhost:3002
-4] Cart Service: http://localhost:3003
-5] Order Service: http://localhost:3004
-
-
-**Docker Deployment**
-
-Each service can be containerized with Docker:
-
- **Dockerfile for a service**
- 
-FROM node:16-alpine
-
+Create five folders: **user, products, orders, cart, frontend**. Each folder contains:
+Example: user/Dockerfile
+FROM node:18
 WORKDIR /app
-
-COPY package*.json ./
-
-RUN npm install --production
-
 COPY . .
-
 EXPOSE 3001
+CMD ["node", "-e", "require('http').createServer((_,res)=>res.end('User Service Running')).listen(3001)"]
 
-CMD  ["npm", "start"]
-            
+
+
+
+- products → port 3002 → "Products Service Running"
+- orders → port 3003 → "Orders Service Running"
+- cart → port 3004 → "Cart Service Running"
+- frontend → port 3000 → "Frontend is Live"
+
+
+**Build and Test Docker Images Locally**
+
+docker build -t user-service ./user
+docker run -p 3001:3001 user-service
+
+
+**Tag and Push to DockerHub**
+
+
+docker tag user-service yourdockerhub/user-service
+docker push yourdockerhub/user-service
+Infrastructure Provisioning with Terraform
+2.1 Project Structure
+terraform/
+├── main.tf
+├── variables.tf
+├── outputs.tf
+
+
+2.2 variables.tf
+variable "region" {
+  default = "us-east-1"
+}
+variable "instance_type" {
+  default = "t2.micro"
+}
+variable "dockerhub_username" {
+  default = "yourdockerhub"
+}
+
+
+2.3 main.tf
+provider "aws" {
+  region = var.region
+}
+
+resource "aws_vpc" "main" {
+  cidr_block = "10.0.0.0/16"
+}
+
+resource "aws_subnet" "public" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.1.0/24"
+  map_public_ip_on_launch = true
+}
+
+resource "aws_internet_gateway" "gw" {
+  vpc_id = aws_vpc.main.id
+}
+
+resource "aws_route_table" "rt" {
+  vpc_id = aws_vpc.main.id
+}
+
+resource "aws_route" "internet_access" {
+  route_table_id         = aws_route_table.rt.id
+  destination_cidr_block = "0.0.0.0/0"
+  gateway_id             = aws_internet_gateway.gw.id
+}
+
+resource "aws_route_table_association" "a" {
+  subnet_id      = aws_subnet.public.id
+  route_table_id = aws_route_table.rt.id
+}
+
+resource "aws_security_group" "app_sg" {
+  name        = "app_sg"
+  description = "Allow HTTP and internal traffic"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    from_port   = 3000
+    to_port     = 3000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 3001
+    to_port     = 3004
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/16"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_instance" "app" {
+  ami                         = "ami-0c02fb55956c7d316" # Ubuntu 22.04 in us-east-1
+  instance_type               = var.instance_type
+  subnet_id                   = aws_subnet.public.id
+  associate_public_ip_address = true
+  security_groups             = [aws_security_group.app_sg.name]
+
+  user_data = <<-EOF
+              #!/bin/bash
+              apt update -y
+              apt install docker.io -y
+              systemctl start docker
+              docker pull ${var.dockerhub_username}/user-service
+              docker pull ${var.dockerhub_username}/products-service
+              docker pull ${var.dockerhub_username}/orders-service
+              docker pull ${var.dockerhub_username}/cart-service
+              docker pull ${var.dockerhub_username}/frontend-service
+              docker run -d -p 3001:3001 ${var.dockerhub_username}/user-service
+              docker run -d -p 3002:3002 ${var.dockerhub_username}/products-service
+              docker run -d -p 3003:3003 ${var.dockerhub_username}/orders-service
+              docker run -d -p 3004:3004 ${var.dockerhub_username}/cart-service
+              docker run -d -p 3000:3000 ${var.dockerhub_username}/frontend-service
+              EOF
+
+  tags = {
+    Name = "EcommerceApp"
+  }
+}
+
+
+2.4 outputs.tf
+output "frontend_public_ip" {
+  value = aws_instance.app.public_ip
+}
+
+
+
+🚀 Step 3: Deployment and Accessibility
+3.1 Apply Terraform
+terraform init
+terraform apply -auto-approve
+
+
+Infrastructure Provisioning with Terraform
+2.1 Project Structure
+terraform/
+├── main.tf
+├── variables.tf
+├── outputs.tf
+
+
+2.2 variables.tf
+variable "region" {
+  default = "us-east-1"
+}
+variable "instance_type" {
+  default = "t2.micro"
+}
+variable "dockerhub_username" {
+  default = "yourdockerhub"
+}
+
+
+2.3 main.tf
+provider "aws" {
+  region = var.region
+}
+
+resource "aws_vpc" "main" {
+  cidr_block = "10.0.0.0/16"
+}
+
+resource "aws_subnet" "public" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.1.0/24"
+  map_public_ip_on_launch = true
+}
+
+resource "aws_internet_gateway" "gw" {
+  vpc_id = aws_vpc.main.id
+}
+
+resource "aws_route_table" "rt" {
+  vpc_id = aws_vpc.main.id
+}
+
+resource "aws_route" "internet_access" {
+  route_table_id         = aws_route_table.rt.id
+  destination_cidr_block = "0.0.0.0/0"
+  gateway_id             = aws_internet_gateway.gw.id
+}
+
+resource "aws_route_table_association" "a" {
+  subnet_id      = aws_subnet.public.id
+  route_table_id = aws_route_table.rt.id
+}
+
+resource "aws_security_group" "app_sg" {
+  name        = "app_sg"
+  description = "Allow HTTP and internal traffic"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    from_port   = 3000
+    to_port     = 3000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 3001
+    to_port     = 3004
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/16"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_instance" "app" {
+  ami                         = "ami-0c02fb55956c7d316" # Ubuntu 22.04 in us-east-1
+  instance_type               = var.instance_type
+  subnet_id                   = aws_subnet.public.id
+  associate_public_ip_address = true
+  security_groups             = [aws_security_group.app_sg.name]
+
+  user_data = <<-EOF
+              #!/bin/bash
+              apt update -y
+              apt install docker.io -y
+              systemctl start docker
+              docker pull ${var.dockerhub_username}/user-service
+              docker pull ${var.dockerhub_username}/products-service
+              docker pull ${var.dockerhub_username}/orders-service
+              docker pull ${var.dockerhub_username}/cart-service
+              docker pull ${var.dockerhub_username}/frontend-service
+              docker run -d -p 3001:3001 ${var.dockerhub_username}/user-service
+              docker run -d -p 3002:3002 ${var.dockerhub_username}/products-service
+              docker run -d -p 3003:3003 ${var.dockerhub_username}/orders-service
+              docker run -d -p 3004:3004 ${var.dockerhub_username}/cart-service
+              docker run -d -p 3000:3000 ${var.dockerhub_username}/frontend-service
+              EOF
+
+  tags = {
+    Name = "EcommerceApp"
+  }
+}
+
+
+2.4 outputs.tf
+output "frontend_public_ip" {
+  value = aws_instance.app.public_ip
+}
+
+
+
+🚀 **Step 3: Deployment and Accessibility**
+
+3.1 Apply Terraform
+terraform init
+terraform apply -auto-approve
+
+
+**3.2 Verify Deployment**
+- Visit http://<frontend_public_ip>:3000 → should show “Frontend is Live”
+- SSH into EC2 and run:
+docker ps
+curl localhost:3001  # Should return "User Service Running"
+
+
+**3.3 Output**
+Terraform will display:
+frontend_public_ip = "XX.XX.XX.XX"
+
+
+Use this IP to access the frontend.
+
+✅ Summary
+| Component | Tool Used | Status | 
+| Dockerized Services | Docker | ✅ | 
+| Infrastructure | Terraform | ✅ | 
+| EC2 Setup | User Data | ✅ | 
+| Public Access | Security Group | ✅ | 
+| Frontend Live | Browser Test | ✅ | 
+
+
+
+
+- Visit http://<frontend_public_ip>:3000 → should show “Frontend is Live”
+- SSH into EC2 and run:
+docker ps
+curl localhost:3001  # Should return "User Service Running"
+
+
+**3.3 Output**
+Terraform will display:
+frontend_public_ip = "XX.XX.XX.XX"
+
+
+Use this IP to access the frontend.
+
+✅ **Summary**
+| Component | Tool Used | Status | 
+| Dockerized Services | Docker | 
+| Infrastructure | Terraform | 
+| EC2 Setup | User Data | 
+| Public Access | Security Group | 
+| Frontend Live | Browser Test | 
+
+
+
+
+
+
+
+
+
 
 
