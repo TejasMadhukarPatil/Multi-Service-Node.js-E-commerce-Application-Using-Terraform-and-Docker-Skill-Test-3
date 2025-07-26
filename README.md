@@ -327,6 +327,12 @@ Use this IP to access the frontend.
 | Frontend Live | Browser Test | 
 
 
+<img width="308" height="37" alt="image" src="https://github.com/user-attachments/assets/52374cd7-b302-480a-b092-e85ae88f7aef" />
+<img width="220" height="113" alt="image" src="https://github.com/user-attachments/assets/eb304399-adc8-4091-8edf-73fcf7563276" />
+
+
+
+
 
 
 
