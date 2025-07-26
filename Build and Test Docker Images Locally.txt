@@ -1,0 +1,2 @@
+docker build -t user-service ./user
+docker run -p 3001:3001 user-service

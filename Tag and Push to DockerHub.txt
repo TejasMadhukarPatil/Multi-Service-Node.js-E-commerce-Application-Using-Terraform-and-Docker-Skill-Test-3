@@ -1,0 +1,2 @@
+docker tag user-service yourdockerhub/user-service
+docker push yourdockerhub/user-service
