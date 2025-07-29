@@ -1,0 +1,5 @@
+FROM node:18
+WORKDIR /app
+COPY . .
+EXPOSE 3002
+CMD ["node", "-e", "require('http').createServer((_,res)=>res.end('Products Service Running')).listen(3002)"]
